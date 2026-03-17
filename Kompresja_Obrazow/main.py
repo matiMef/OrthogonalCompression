@@ -5,127 +5,130 @@ import numpy as np
 import skimage.color as color
 from scipy.fftpack import dct, idct
 
-# Tytuł Projektu
-
 matrix_size = 8
-
 path = "test_model.jpg"
-image = io.imread(path)
-image = color.rgb2gray(image)
 
-def crop_image(image, crop_size):
-  h, w = image.shape
+def load_image(path):
+  raw_image = io.imread(path)
+  gray_image = color.rgb2gray(raw_image)
+  return gray_image
+
+def crop_image(gray_image, crop_size):
+  h, w = gray_image.shape
   new_h = (h // crop_size) * crop_size
   new_w = (w // crop_size) * crop_size
-  return image[:new_h, :new_w]
+  cropped_image = gray_image[:new_h, :new_w]
+  return cropped_image
 
-image = crop_image(image, matrix_size)
+def split_to_bloks(cropped_image, block_size):
+  h, w = cropped_image.shape
+  splitted_image = np.reshape(cropped_image, (h // block_size, block_size, w // block_size, block_size))
+  splitted_image = np.transpose(splitted_image, (0, 2, 1, 3))
+  return splitted_image
 
-def splint_to_bloks(image, block_size):
-  h, w = image.shape
-  splited = np.reshape(image, (h // block_size, block_size, w // block_size, block_size))
-  splited = np.transpose(splited,(0,2,1,3))
-  return splited
+def show_blocks_grid(splited_image):
+  for i in range(15):
+    for j in range(15):
+      plt.subplot(15, 15, i*15 + j + 1)
+      plt.imshow(splited_image[i, j], cmap = 'gray')
+      plt.axis('off')
+  matplotlib.pyplot.imshow(splited_image[15, 0], cmap = 'gray')
+  matplotlib.pyplot.show()
+  print(type(splited_image))
+  print(np.shape(splited_image))
 
-img = splint_to_bloks(image, matrix_size)
+def calculate_img_dimensions(img):
+  img_h = np.shape(img)[0]
+  img_w = np.shape(img)[1]
+  return [img_h, img_w]
 
-#wyświetlenie fragmnetu obrazu z podziałem na bloki
-for i in range(15):
-  for j in range(15):
-    plt.subplot(15, 15, i*15 + j + 1)
-    plt.imshow(img[i,j], cmap='gray')
-    plt.axis('off')
-matplotlib.pyplot.imshow(img[15,0], cmap='gray')
-matplotlib.pyplot.show()
-print(type(image))
-print(image.shape)
+def calculate_compression_mask(M, N):
+  mask_size = M // 2
+  mask = np.zeros((M, N))
+  for i in range (0, mask_size):
+    for j in range(mask_size - i):
+      mask[i, j] = 1
+  return mask
 
-img_h = np.shape(img)[0]
-img_w = np.shape(img)[1]
-
-def dct_compression(img, img_h, img_w):
- with np.printoptions(edgeitems=8, precision=2, linewidth=1000):
-  
-  img_block = img[img_h, img_w]
-
-  M = img_block.shape[0]
-  N = img_block.shape[1]
+def dct_compression(splited_image, img_h, img_w):
+  img_block = splited_image[img_h, img_w]
+  M, N = calculate_img_dimensions(img_block)
   PI = np.pi
 
-  alfa_p = np.full((M, 1), np.sqrt(2/M))
-  alfa_q = np.full((1, N), np.sqrt(2/N))
-  alfa_p[0, 0] = 1/np.sqrt(M)
-  alfa_q[0, 0] = 1/np.sqrt(N)
-
-  m=np.arange(M)
-  p=np.arange(M)
-  m=np.reshape(m, (1, -1))
-  p=np.reshape(p, (-1, 1))
+  m = np.arange(M)
+  p = np.arange(M)
+  m = np.reshape(m, (1, -1))
+  p = np.reshape(p, (-1, 1))
+  
   T = np.cos((PI * (2*m+1) * p) / (2*M))
-
   T[0, :] /= np.sqrt(M)         
   T[1:, :] /= np.sqrt(M / 2)
- 
   B = (T @ img_block @ T.T)
-  
-  mask_size = M//2
-  mask = np.zeros((M,N))
-  for i in range (0, mask_size):
-    for j in range(mask_size-i):
-      mask[i, j] = 1
-  
-  B_masked = B * mask
 
+  with np.printoptions(edgeitems=8, precision=1, linewidth=1000):
+    if(img_h == 0 and img_w == 0):
+      print(B)
+  
+  mask = calculate_compression_mask(M,N)
+  B_masked = B * mask
   A_compressed = T.T @ B_masked @ T
   return A_compressed
 
-img_compressed = np.zeros_like(img)
+def compress_dct_image(splitted_image):
+  img_h, img_w = calculate_img_dimensions(splitted_image)
+  image_compressed = np.zeros_like(splitted_image)
+  for i in range(img_h):
+    for j in range(img_w):
+      image_block = dct_compression(splitted_image, i, j)
+      image_compressed[i, j] = image_block
+  return image_compressed
 
-for i in range(img_h):
-   for j in range(img_w):
-    block = dct_compression(img, i, j)
-    img_compressed[i, j] = block 
-
-def scipy_dct(image_input):
- with np.printoptions(edgeitems=8, precision=2, linewidth=1000):
-  B = dct(dct(image_input.T, norm='ortho').T, norm='ortho')
-
-  mask_size = matrix_size//2
-  mask = np.zeros((matrix_size,matrix_size))
-  for i in range (0, mask_size):
-    for j in range(mask_size-i):
-      mask[i, j] = 1
-    
+def scipy_dct(splitted_image):
+ with np.printoptions(edgeitems = 8, precision = 2, linewidth = 1000):
+  B = dct(dct(splitted_image.T, norm='ortho').T, norm='ortho')
+  M, N = calculate_img_dimensions(splitted_image)
+  print(M, N)
+  mask = calculate_compression_mask(M, N)
   B_compressed = B * mask
-
   A_compressed = idct(idct(B_compressed, norm='ortho').T, norm='ortho').T
   return A_compressed
+ 
+def compress_scipy_dct_image(splitted_image):
+  img_h, img_w = calculate_img_dimensions(splitted_image)
+  image_compressed = np.zeros_like(splitted_image)
+  for i in range(img_h):
+    for j in range(img_w):
+      image_block = scipy_dct(splitted_image[i,j])
+      image_compressed[i, j] = image_block
+  return image_compressed
 
-img_compressed2 = np.zeros_like(img)
-for i in range(img_h):
-   for j in range(img_w):
-    block2 = scipy_dct(img[i,j])
-    img_compressed2[i, j] = block2
+def splited_image_to_image(image_compressed, block_size):
+  h, w = calculate_img_dimensions(image_compressed)
+  temp = image_compressed.transpose(0, 2, 1, 3)
+  image_combined = np.reshape(temp, (h * block_size, w * block_size))
+  return image_combined
 
-def to_image(image, block_size):
-  h = image.shape[0]
-  w = image.shape[1]
-  temp = image.transpose(0, 2, 1, 3)
-  combined = np.reshape(temp, (h * block_size, w * block_size))
-  return combined
+def show_decompression_efect(img, img_dct, img_scipy_dct):
+  plt.figure(figsize=(12, 6))
+  plt.subplot(1, 3, 1)
+  plt.title("Przed kompresją")
+  plt.imshow(img, cmap='gray')
+  plt.subplot(1, 3, 2)
+  plt.title("Po kompresji")
+  plt.imshow(img_dct, cmap ='gray')
+  plt.subplot(1, 3, 3)
+  plt.title("Po kompresji 2")
+  plt.imshow(img_scipy_dct, cmap='gray')
+  plt.show()
 
-new_image = to_image(img_compressed, 8)
-new_image2 = to_image(img_compressed2, 8)
+def main():
+  gray_image = load_image(path)
+  cropped_image = crop_image(gray_image, matrix_size)
+  splitted_image = split_to_bloks(cropped_image, matrix_size)
+  image_compressed_dct = compress_dct_image(splitted_image)
+  image_compressed_scipy_dct = compress_scipy_dct_image(splitted_image)
+  dct_image = splited_image_to_image(image_compressed_dct, matrix_size)
+  scipy_dct_image = splited_image_to_image(image_compressed_scipy_dct, matrix_size)
+  show_decompression_efect(gray_image, dct_image, scipy_dct_image)
 
-plt.figure(figsize=(12, 6))
-plt.subplot(1, 3, 1)
-plt.title("Przed kompresją")
-plt.imshow(image, cmap='gray')
-plt.subplot(1, 3, 2)
-plt.title("Po kompresji")
-plt.imshow(new_image, cmap='gray')
-plt.subplot(1, 3, 3)
-plt.title("Po kompresji 2")
-plt.imshow(new_image2, cmap='gray')
-plt.show()
-
+main()
