@@ -7,7 +7,7 @@ from scipy.fftpack import dct, idct
 import timeit
 
 matrix_size = 8
-path = "test_model.jpg"
+path = "test_model2.jpg"
 
 def load_image(path):
   raw_image = io.imread(path)
@@ -89,18 +89,15 @@ def total_time_chart(times):
 
     ax.set_ylabel('Execution time (s)')
     ax.set_title('Total execution time comparison')
-    
     ax.set_xticks(x)
     ax.set_xticklabels(type_label)
-
     ax.set_xlim(x[0] - 0.5, x[0] + 0.5) 
-    
     ax.legend(loc='upper right')
     plt.tight_layout()
     plt.show()
 
-def dct_compression(splited_image, img_h, img_w):
-  img_block = splited_image[img_h, img_w]
+def dct_compression(splitted_image, img_h, img_w):
+  img_block = splitted_image[img_h, img_w]
   M, N = calculate_img_dimensions(img_block)
   PI = np.pi
 
@@ -172,6 +169,88 @@ def show_decompression_efect(img, img_dct, img_scipy_dct):
   plt.imshow(img_scipy_dct, cmap='gray')
   plt.show()
 
+def dct_compress_image(splitted_image, img_h, img_w):
+  img_block = splitted_image[img_h, img_w]
+  M, N = calculate_img_dimensions(img_block)
+  PI = np.pi
+
+  m = np.arange(M)
+  p = np.arange(M)
+  m = np.reshape(m, (1, -1))
+  p = np.reshape(p, (-1, 1))
+  
+  T = np.cos((PI * (2*m+1) * p) / (2*M))
+  T[0, :] /= np.sqrt(M)         
+  T[1:, :] /= np.sqrt(M / 2)
+  B = (T @ img_block @ T.T)
+
+  mask = calculate_compression_mask(M,M)
+  B_masked = B * mask
+
+  return B_masked
+
+def transform_B_into_row(B_masked):
+  B_masked = B_masked[B_masked != 0]
+  return B_masked
+  
+def compress_B(splitted_image):
+    img_h, img_w, M, N = np.shape(splitted_image)
+    all_data = [] 
+    
+    all_data.extend([img_h])
+    all_data.extend([img_w])
+    all_data.extend([M])
+
+    for i in range(img_h):
+        for j in range(img_w):
+          B_masked = dct_compress_image(splitted_image, i, j)
+          compressed_values = transform_B_into_row(B_masked)
+          all_data.extend(compressed_values)
+    
+    final_data = np.array(all_data, dtype=np.float16)
+    final_data2 = np.round(final_data, 2)
+    np.savez_compressed('kompresja.cwelpeg.npz', data=final_data2)
+
+def decompress_B(filename):
+    archive = np.load(filename)
+    final_data = archive['data']
+    img_h, img_w, M = int(final_data[0]), int(final_data[1]), int(final_data[2])
+    final_data = np.delete(final_data, 0, 0)
+    final_data = np.delete(final_data, 0, 0)
+    final_data = np.delete(final_data, 0, 0)
+    mask_size = M // 2
+    count_per_block = 0
+    for i in range(mask_size):
+        for j in range(mask_size - i):
+            count_per_block += 1
+            
+    full_image = np.zeros((img_h * M, img_w * M)) 
+    
+    PI = np.pi
+    m = np.arange(M).reshape(1, -1)
+    p = np.arange(M).reshape(-1, 1)
+    T = np.cos((PI * (2*m+1) * p) / (2*M))
+    T[0, :] /= np.sqrt(M)
+    T[1:, :] /= np.sqrt(M / 2)
+    
+    ptr = 0
+    for i in range(img_h):
+        for j in range(img_w):
+            block_flat = final_data[ptr : ptr + count_per_block]
+            ptr += count_per_block
+            
+            B_reconstructed = np.zeros((M, M))
+            v_idx = 0
+            for row in range(mask_size):
+                for col in range(mask_size - row):
+                    if v_idx < len(block_flat):
+                        B_reconstructed[row, col] = block_flat[v_idx]
+                        v_idx += 1
+            
+            img_block = T.T @ B_reconstructed @ T
+            full_image[i*M : (i+1)*M, j*M : (j+1)*M] = img_block
+    return full_image
+
 def main():
   gray_image = load_image(path)
   cropped_image = crop_image(gray_image, matrix_size)
@@ -190,6 +269,12 @@ def main():
   times[1]=time
   
   total_time_chart(times)
+
+  compress_B(splitted_image)
+  fullimage1 = decompress_B('kompresja.cwelpeg.npz')
+  plt.title("CWELpeg")
+  plt.imshow(fullimage1, cmap='gray')
+  plt.show()
 
   dct_image = reshape_combined_image(image_compressed_dct, matrix_size)
   scipy_dct_image = reshape_combined_image(image_compressed_scipy_dct, matrix_size)
