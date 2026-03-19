@@ -75,14 +75,14 @@ def dct_compression(splited_image, img_h, img_w):
   A_compressed = T.T @ B_masked @ T
   return A_compressed
 
-def compress_dct_image(splitted_image):
+def combine_dct_image(splitted_image):
   img_h, img_w = calculate_img_dimensions(splitted_image)
-  image_compressed = np.zeros_like(splitted_image)
+  image_combined = np.zeros_like(splitted_image)
   for i in range(img_h):
     for j in range(img_w):
       image_block = dct_compression(splitted_image, i, j)
-      image_compressed[i, j] = image_block
-  return image_compressed
+      image_combined [i, j] = image_block
+  return image_combined 
 
 def scipy_dct(splitted_image, img_h, img_w):
  with np.printoptions(edgeitems = 8, precision = 2, linewidth = 1000):
@@ -96,18 +96,18 @@ def scipy_dct(splitted_image, img_h, img_w):
   A_compressed = idct(idct(B_compressed, axis=0, norm='ortho'), axis=1, norm='ortho')
   return A_compressed
  
-def compress_scipy_dct_image(splitted_image):
+def combine_scipy_dct_image(splitted_image):
   img_h, img_w = calculate_img_dimensions(splitted_image)
-  image_compressed = np.zeros_like(splitted_image)
+  image_combined = np.zeros_like(splitted_image)
   for i in range(img_h):
     for j in range(img_w):
       image_block = scipy_dct(splitted_image[i,j], i, j)
-      image_compressed[i, j] = image_block
-  return image_compressed
+      image_combined[i, j] = image_block
+  return image_combined
 
-def splited_image_to_combined_image(image_compressed, block_size):
-  h, w = calculate_img_dimensions(image_compressed)
-  temp = image_compressed.transpose(0, 2, 1, 3)
+def reshape_combined_image(image_combined, block_size):
+  h, w = calculate_img_dimensions(image_combined)
+  temp = image_combined.transpose(0, 2, 1, 3)
   image_combined = np.reshape(temp, (h * block_size, w * block_size))
   return image_combined
 
@@ -129,10 +129,10 @@ def main():
   cropped_image = crop_image(gray_image, matrix_size)
   splitted_image = split_to_bloks(cropped_image, matrix_size)
   show_blocks_grid(splitted_image)
-  image_compressed_dct = compress_dct_image(splitted_image)
-  image_compressed_scipy_dct = compress_scipy_dct_image(splitted_image)
-  dct_image = splited_image_to_combined_image(image_compressed_dct, matrix_size)
-  scipy_dct_image = splited_image_to_combined_image(image_compressed_scipy_dct, matrix_size)
+  image_compressed_dct = combine_dct_image(splitted_image)
+  image_compressed_scipy_dct = combine_scipy_dct_image(splitted_image)
+  dct_image = reshape_combined_image(image_compressed_dct, matrix_size)
+  scipy_dct_image = reshape_combined_image(image_compressed_scipy_dct, matrix_size)
   show_decompression_efect(gray_image, dct_image, scipy_dct_image)
 
 main()
