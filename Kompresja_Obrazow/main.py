@@ -23,21 +23,21 @@ def crop_image(gray_image, crop_size):
 
 def split_to_bloks(cropped_image, block_size):
   h, w = cropped_image.shape
-  splitted_image = np.reshape(cropped_image, (h // block_size, block_size, w // block_size, block_size))
-  splitted_image = np.transpose(splitted_image, (0, 2, 1, 3))
-  return splitted_image
+  split_image = np.reshape(cropped_image, (h // block_size, block_size, w // block_size, block_size))
+  split_image = np.transpose(split_image, (0, 2, 1, 3))
+  return split_image
 
-def show_blocks_grid(splitted_image):
+def show_blocks_grid(split_image):
   plt.title("Obrazek po podziale na bloki")
   for i in range(15):
     for j in range(15):
       plt.subplot(15, 15, i*15 + j + 1)
-      plt.imshow(splitted_image[i, j], cmap = 'gray')
+      plt.imshow(split_image[i, j], cmap = 'gray')
       plt.axis('off')
-  # plt.imshow(splitted_image[15, 0], cmap = 'gray')
+  # plt.imshow(split_image[15, 0], cmap = 'gray')
   # plt.show()
-  # print(type(splitted_image))
-  # print(np.shape(splitted_image))
+  # print(type(split_image))
+  # print(np.shape(split_image))
 
 # === Funkcje pomocnicze ===
 
@@ -96,8 +96,8 @@ def total_time_chart(times):
     plt.tight_layout()
     plt.show()
 
-def dct_compression(splitted_image, img_h, img_w):
-  img_block = splitted_image[img_h, img_w]
+def dct_compression(split_image, img_h, img_w):
+  img_block = split_image[img_h, img_w]
   M, N = calculate_img_dimensions(img_block)
   PI = np.pi
 
@@ -120,33 +120,33 @@ def dct_compression(splitted_image, img_h, img_w):
   A_compressed = T.T @ B_masked @ T
   return A_compressed
 
-def combine_dct_image(splitted_image):
-  img_h, img_w = calculate_img_dimensions(splitted_image)
-  image_combined = np.zeros_like(splitted_image)
+def combine_dct_image(split_image):
+  img_h, img_w = calculate_img_dimensions(split_image)
+  image_combined = np.zeros_like(split_image)
   for i in range(img_h):
     for j in range(img_w):
-      image_block = dct_compression(splitted_image, i, j)
+      image_block = dct_compression(split_image, i, j)
       image_combined [i, j] = image_block
   return image_combined 
 
-def scipy_dct(splitted_image, img_h, img_w):
+def scipy_dct(split_image, img_h, img_w):
  with np.printoptions(edgeitems = 8, precision = 2, linewidth = 1000):
-  B = dct(dct(splitted_image, axis=0, norm='ortho'), axis=1, norm='ortho')
+  B = dct(dct(split_image, axis=0, norm='ortho'), axis=1, norm='ortho')
   with np.printoptions(edgeitems=8, precision=1, linewidth=1000):
     if(img_h == 0 and img_w == 0):
       print(B)
-  M, N = calculate_img_dimensions(splitted_image)
+  M, N = calculate_img_dimensions(split_image)
   mask = calculate_compression_mask(M, N)
   B_compressed = B * mask
   A_compressed = idct(idct(B_compressed, axis=0, norm='ortho'), axis=1, norm='ortho')
   return A_compressed
  
-def combine_scipy_dct_image(splitted_image):
-  img_h, img_w = calculate_img_dimensions(splitted_image)
-  image_combined = np.zeros_like(splitted_image)
+def combine_scipy_dct_image(split_image):
+  img_h, img_w = calculate_img_dimensions(split_image)
+  image_combined = np.zeros_like(split_image)
   for i in range(img_h):
     for j in range(img_w):
-      image_block = scipy_dct(splitted_image[i,j], i, j)
+      image_block = scipy_dct(split_image[i,j], i, j)
       image_combined[i, j] = image_block
   return image_combined
 
@@ -169,8 +169,8 @@ def show_decompression_efect(img, img_dct, img_scipy_dct):
   plt.imshow(img_scipy_dct, cmap='gray')
   plt.show()
 
-def dct_compress_image(splitted_image, img_h, img_w):
-  img_block = splitted_image[img_h, img_w]
+def dct_compress_image(split_image, img_h, img_w):
+  img_block = split_image[img_h, img_w]
   M, N = calculate_img_dimensions(img_block)
   PI = np.pi
 
@@ -193,8 +193,8 @@ def transform_B_into_row(B_masked):
   B_masked = B_masked[B_masked != 0]
   return B_masked
   
-def compress_B(splitted_image):
-    img_h, img_w, M, N = np.shape(splitted_image)
+def compress_B(split_image):
+    img_h, img_w, M, N = np.shape(split_image)
     all_data = [] 
     
     all_data.extend([img_h])
@@ -203,7 +203,7 @@ def compress_B(splitted_image):
 
     for i in range(img_h):
         for j in range(img_w):
-          B_masked = dct_compress_image(splitted_image, i, j)
+          B_masked = dct_compress_image(split_image, i, j)
           compressed_values = transform_B_into_row(B_masked)
           all_data.extend(compressed_values)
     
@@ -251,30 +251,33 @@ def decompress_B(filename):
             full_image[i*M : (i+1)*M, j*M : (j+1)*M] = img_block
     return full_image
 
+def compress_image_to_file(split_image):
+  compress_B(split_image)
+  fullimage1 = decompress_B('kompresja.cwelpeg.npz')
+  plt.title("CWELpeg")
+  plt.imshow(fullimage1, cmap='gray')
+  plt.show()
+
 def main():
   gray_image = load_image(path)
   cropped_image = crop_image(gray_image, matrix_size)
-  splitted_image = split_to_bloks(cropped_image, matrix_size)
-  show_blocks_grid(splitted_image)
+  split_image = split_to_bloks(cropped_image, matrix_size)
+  show_blocks_grid(split_image)
   
   times = np.zeros((2,1))
   start = start_time_measure()
-  image_compressed_dct = combine_dct_image(splitted_image)
+  image_compressed_dct = combine_dct_image(split_image)
   time = end_time_measure(start)
   times[0]=time
   
   start = start_time_measure()
-  image_compressed_scipy_dct = combine_scipy_dct_image(splitted_image)
+  image_compressed_scipy_dct = combine_scipy_dct_image(split_image)
   time = end_time_measure(start)
   times[1]=time
   
   total_time_chart(times)
 
-  compress_B(splitted_image)
-  fullimage1 = decompress_B('kompresja.cwelpeg.npz')
-  plt.title("CWELpeg")
-  plt.imshow(fullimage1, cmap='gray')
-  plt.show()
+  compress_image_to_file(split_image)
 
   dct_image = reshape_combined_image(image_compressed_dct, matrix_size)
   scipy_dct_image = reshape_combined_image(image_compressed_scipy_dct, matrix_size)
