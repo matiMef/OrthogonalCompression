@@ -132,29 +132,64 @@ def compress_cosine_image(cosinus_img, m):
 def noise_calculate(original, compresed):
   return original - compresed
 def dct_coefficients(image):
-  FC = dct(dct(image.T, norm='ortho').T, norm='ortho')
+  FC = dct(dct(image,axis = 0, norm='ortho'),axis=1, norm='ortho')
   return FC
+
+def fft_compression(image,m):
+  Transformation = np.fft.fft2(image)
+  mask = np.abs(Transformation)>=m 
+  Transformation_compressed = Transformation * mask
+  Pixels = np.real(np.fft.ifft2(Transformation_compressed))
+  return Pixels
  
-def show_decompression_efect(img, img_dct, img_scipy_dct, img_cosinus, snr, noise, FC):
-  plt.figure(figsize=(32, 32))
-  plt.subplot(1, 3, 1)
+def caculate_aproximation_error(image):
+  FC = dct_coefficients(image)
+  FF = np.fft.fft2(image)
+  sorted_dct = np.sort(np.abs(FC).flatten())[::-1]
+  sorted_fft = np.sort(np.abs(FF).flatten())[::-1]
+  total_energy_dct = np.sum(FC ** 2)
+  total_energy_dft = np.sum(np.abs(FF) ** 2)
+    
+  errors_dct = []
+  errors_dft = []
+    
+  M_max = len(sorted_dct)
+  if M_max > 50000:
+    M_max = 50000
+    
+  for m in range(1, M_max):
+      energy_kept_dct = np.sum(sorted_dct[:m] ** 2)
+      energy_kept_dft = np.sum(sorted_fft[:m] ** 2)
+        
+      errors_dct.append((total_energy_dct - energy_kept_dct) / total_energy_dct)
+      errors_dft.append((total_energy_dft - energy_kept_dft) / total_energy_dft)
+    
+  return errors_dct, errors_dft
+
+def show_decompression_efect(img, img_dct, img_scipy_dct, img_cosinus, snr, noise, FC, errors_dct, errors_dft):
+  plt.figure(figsize=(18, 10))
+  plt.subplot(2, 3, 1)
   plt.title("Przed kompresją")
   plt.imshow(img, cmap='gray')
-  plt.subplot(1, 3, 2)
+  plt.subplot(2, 3, 2)
   plt.title("Po kompresji")
   plt.imshow(img_dct, cmap ='gray')
-  plt.subplot(1, 3, 3)
+  plt.subplot(2, 3, 3)
   plt.title("Po kompresji 2")
   plt.imshow(img_scipy_dct, cmap='gray')
-  plt.subplot(2, 3, 1)
+  plt.subplot(2, 3, 4)
   plt.title(f"Po cosinus\nSNR = {snr:.2f} dB")
   plt.imshow(img_cosinus, cmap='gray')
-  plt.subplot(2, 3, 2)
-  plt.title("Szum kompresji")
-  plt.imshow(noise, cmap='gray')
-  plt.subplot(2, 3, 3)
+  plt.subplot(2, 3, 5)
   plt.title("Współczynniki DCT")
   plt.imshow(np.log(1e-5 + np.abs(FC)), cmap='gray')
+  plt.subplot(2, 3, 6)
+  plt.plot(np.log10(errors_dct), color='red', label='DCT')
+  plt.plot(np.log10(errors_dft), color='blue', label='Fourier')
+  plt.title("log10(epsilon[M]^2)")
+  plt.xlabel("M - liczba zachowanych współczynników")
+  plt.ylabel("log10(błąd)")
+  plt.legend()
   plt.show()
 
 def main():
@@ -169,10 +204,8 @@ def main():
   img_cosinus_compressed = splited_image_to_image(img_compressed_cosinus, matrix_size)
   snr = calculate_snr(gray_image, dct_image)
   noise = noise_calculate(gray_image, dct_image)
+  errors_dct, errors_dft = caculate_aproximation_error(gray_image)
   FC = dct_coefficients(gray_image)
-  show_decompression_efect(gray_image, dct_image, scipy_dct_image, img_cosinus_compressed, snr, noise, FC)
-
-
-  
+  show_decompression_efect(gray_image, dct_image, scipy_dct_image, img_cosinus_compressed, snr, noise, FC, errors_dct, errors_dft )
 
 main()
