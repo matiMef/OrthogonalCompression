@@ -1,10 +1,10 @@
+import timeit
+import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import skimage.io as io
-import numpy as np
 import skimage.color as color
 from scipy.fftpack import dct, idct
-import timeit
 
 matrix_size = 8
 path = "test_model2.jpg"
@@ -253,9 +253,10 @@ def decompress_B(filename):
 
 def compress_image_to_file(split_image):
   compress_B(split_image)
-  fullimage1 = decompress_B('kompresja.cwelpeg.npz')
-  plt.title("CWELpeg")
-  plt.imshow(fullimage1, cmap='gray')
+  full_image = decompress_B('kompresja.cwelpeg.npz')
+  plt.imshow(full_image, cmap='gray')
+  plt.title("CwELpeg")
+  plt.axis('off')
   plt.show()
 
 def main():
