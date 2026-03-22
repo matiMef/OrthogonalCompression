@@ -385,6 +385,6 @@ def main():
   show_correlation(cropped_image)
   show_coeffcients(cropped_image)
 
-  compress_image_to_file(cropped_image)
+  compress_image_to_file(split_image)
 
 main()
