@@ -77,17 +77,21 @@ def calculate_snr(cropped_image, combined_image):
   SNR = 10 * np.log10 (og/dif)
   return SNR
 
+# cropped
 def calculate_noise(gray_image, combined_image):
   return gray_image - combined_image
 
+# cropped
 def calculate_dct_coefficients(gray_image):
   FC = dct(dct(gray_image, axis = 0, norm='ortho'), axis=1, norm='ortho')
   return FC
 
+# cropped
 def calculate_fft_coefficients(gray_image):
   FF = np.fft.fft2(gray_image)
   return FF
 
+# cropped
 def caculate_aproximation_error(gray_image):
   FC = calculate_dct_coefficients(gray_image)
   FF = calculate_fft_coefficients(gray_image)
