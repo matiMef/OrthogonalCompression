@@ -77,24 +77,20 @@ def calculate_snr(cropped_image, combined_image):
   SNR = 10 * np.log10 (og/dif)
   return SNR
 
-# cropped
-def calculate_noise(gray_image, combined_image):
-  return gray_image - combined_image
+def calculate_noise(cropped_image, combined_image):
+  return cropped_image - combined_image
 
-# cropped
-def calculate_dct_coefficients(gray_image):
-  FC = dct(dct(gray_image, axis = 0, norm='ortho'), axis=1, norm='ortho')
+def calculate_dct_coefficients(cropped_image):
+  FC = dct(dct(cropped_image, axis = 0, norm='ortho'), axis=1, norm='ortho')
   return FC
 
-# cropped
-def calculate_fft_coefficients(gray_image):
-  FF = np.fft.fft2(gray_image)
+def calculate_fft_coefficients(cropped_image):
+  FF = np.fft.fft2(cropped_image)
   return FF
 
-# cropped
-def caculate_aproximation_error(gray_image):
-  FC = calculate_dct_coefficients(gray_image)
-  FF = calculate_fft_coefficients(gray_image)
+def caculate_aproximation_error(cropped_image):
+  FC = calculate_dct_coefficients(cropped_image)
+  FF = calculate_fft_coefficients(cropped_image)
   sorted_dct = np.sort(np.abs(FC).flatten())[::-1]
   sorted_fft = np.sort(np.abs(FF).flatten())[::-1]
   total_energy_dct = np.sum(FC ** 2)
@@ -147,11 +143,11 @@ def total_time_chart(times):
     plt.tight_layout()
     plt.show()
 
-def show_decompression_efect(gray_image, dct_image, scipy_dct_image):
+def show_decompression_efect(cropped_image, dct_image, scipy_dct_image):
   plt.figure(figsize=(12, 6))
   plt.subplot(1, 3, 1)
   plt.title("Przed kompresją")
-  plt.imshow(gray_image, cmap='gray')
+  plt.imshow(cropped_image, cmap='gray')
   plt.subplot(1, 3, 2)
   plt.title("Po kompresji DCT")
   plt.imshow(dct_image, cmap ='gray')
@@ -382,7 +378,7 @@ def main():
 
   dct_image = reshape_combined_image(image_compressed_dct, matrix_size)
   scipy_dct_image = reshape_combined_image(image_compressed_scipy_dct, matrix_size)
-  show_decompression_efect(gray_image, dct_image, scipy_dct_image)
+  show_decompression_efect(cropped_image, dct_image, scipy_dct_image)
 
   show_SNR(cropped_image, dct_image, scipy_dct_image, fft_image)
   show_correlation(cropped_image)
