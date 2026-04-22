@@ -29,7 +29,7 @@ def dct_compress_image(split_image, img_h, img_w ):
   T[1:, :] /= np.sqrt(M / 2)
   B = (T @ img_block @ T.T)
 
-  mask = calculate_compression_mask(M,M)
+  mask = calculate_compression_mask(M, M)
   B_masked = B * mask
 
   return B_masked
@@ -39,7 +39,9 @@ def transform_B_into_row(B_masked):
   return B_masked
   
 def compress_B(split_image):
+    quality_scale = 10
     img_h, img_w, M, N = np.shape(split_image)
+    print(img_h, img_w, M)
     all_data = [] 
     
     all_data.extend([img_h])
@@ -53,12 +55,17 @@ def compress_B(split_image):
           all_data.extend(compressed_values)
     
     final_data = np.array(all_data, dtype=np.float16)
-    final_data2 = np.round(final_data, 2)
-    np.savez_compressed('compressions/kompresja.celpeg.npz', data=final_data2)
+    final_data = quality_scale * final_data
+    final_data = np.array([int(i) for i in final_data])
+    print(final_data)
+    np.savez_compressed('compressions/kompresja.celpeg.npz', data=final_data)
 
 def decompress_B(filename):
+    quality_scale = 10
     archive = np.load(filename)
     final_data = archive['data']
+    final_data = final_data.astype(np.float32) / quality_scale
+    print(final_data[0], final_data[1], final_data[2])
     img_h, img_w, M = int(final_data[0]), int(final_data[1]), int(final_data[2])
     final_data = np.delete(final_data, 0, 0)
     final_data = np.delete(final_data, 0, 0)
@@ -69,7 +76,7 @@ def decompress_B(filename):
         for j in range(mask_size - i):
             count_per_block += 1
             
-    full_image = np.zeros((img_h * M, img_w * M)) 
+    reconstructed_image = np.zeros((img_h * M, img_w * M)) 
     
     PI = np.pi
     m = np.arange(M).reshape(1, -1)
@@ -92,14 +99,14 @@ def decompress_B(filename):
                         B_reconstructed[row, col] = block_flat[v_idx]
                         v_idx += 1
             
-            img_block = T.T @ B_reconstructed @ T
-            full_image[i*M : (i+1)*M, j*M : (j+1)*M] = img_block
-    return full_image
+            dct_block = T.T @ B_reconstructed @ T
+            reconstructed_image[i*M : (i+1)*M, j*M : (j+1)*M] = dct_block
+    return reconstructed_image
 
 def save_dct_image_to_file(split_image):
   compress_B(split_image)
-  full_image = decompress_B('compressions/kompresja.celpeg.npz')
-  plt.imshow(full_image, cmap='gray')
+  reconstructed_image = decompress_B('compressions/kompresja.celpeg.npz')
+  plt.imshow(reconstructed_image, cmap='gray')
   plt.title("CELpeg")
   plt.axis('off')
   plt.show()

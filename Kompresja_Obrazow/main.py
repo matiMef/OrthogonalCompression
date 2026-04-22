@@ -3,8 +3,8 @@ import numpy as np
 from utils import time_measure, image, visualizations
 from algorithms import dct, dct_format, fft, sft
 
-dct_block_size = 8
-path = "test_models/test_model2.jpg"
+dct_block_size = 64
+path = "test_models/test_model4.jpg"
 
 def main():
     gray_image = image.load_image(path)

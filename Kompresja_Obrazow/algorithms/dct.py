@@ -23,12 +23,12 @@ def calculate_compression_mask(M, N):
 
 def apply_dct_to_all_blocks(split_image):
   img_h, img_w = calculate_image_dimensions(split_image)
-  image_combined = np.zeros_like(split_image)
+  reconstructed_image = np.zeros_like(split_image)
   for i in range(img_h):
     for j in range(img_w):
       image_block = dct_compression(split_image, i, j)
-      image_combined [i, j] = image_block
-  return image_combined 
+      reconstructed_image[i, j] = image_block
+  return reconstructed_image
 
 def dct_compression(split_image, img_h, img_w):
   img_block = split_image[img_h, img_w]
@@ -57,15 +57,15 @@ def dct_compression(split_image, img_h, img_w):
 
 def apply_scipy_dct_to_all_blocks(split_image):
   img_h, img_w = calculate_image_dimensions(split_image)
-  image_combined = np.zeros_like(split_image)
+  reconstructed_image = np.zeros_like(split_image)
   for i in range(img_h):
     for j in range(img_w):
       image_block = scipy_dct(split_image[i,j], i, j)
-      image_combined[i, j] = image_block
-  return image_combined
+      reconstructed_image[i, j] = image_block
+  return reconstructed_image
 
 def scipy_dct(split_image, img_h, img_w):
- with np.printoptions(edgeitems = 8, precision = 2, linewidth = 1000):
+ with np.printoptions(edgeitems=8, precision=2, linewidth = 1000):
   B = dct(dct(split_image, axis=0, norm='ortho'), axis=1, norm='ortho')
   with np.printoptions(edgeitems=8, precision=1, linewidth=1000):
     if(img_h == 0 and img_w == 0):
