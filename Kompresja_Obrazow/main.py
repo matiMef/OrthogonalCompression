@@ -220,6 +220,61 @@ def show_coeffcients(cropped_image, sft_image):
   plt.imshow(np.log(1e-5 + np.abs(SFT_FF)), cmap='gray')
   plt.show()
 
+def show_phase_comparison(cropped_image, threshold):
+  FF = calculate_fft_coefficients(cropped_image)
+
+  # Bierzemy pierwszy wiersz FFT — 1D przekrój wzdłuż osi poziomej
+  ff_row = FF[0, :]
+  freqs = np.fft.fftfreq(ff_row.size)
+  freqs_shifted = np.fft.fftshift(freqs)
+  ff_row_shifted = np.fft.fftshift(ff_row)
+
+  phase_before = np.angle(ff_row_shifted)
+
+  mask = np.abs(ff_row_shifted) >= threshold
+  phase_after = np.where(mask, phase_before, np.nan)
+
+  kept_pct = 100 * np.sum(mask) / mask.size
+
+  fig, axes = plt.subplots(3, 1, figsize=(12, 10))
+  fig.suptitle(f"Faza FFT — porównanie przed i po kompresji (próg = {threshold})")
+
+  # Amplituda — żeby widać było które współczynniki są zachowane
+  axes[0].plot(freqs_shifted, np.abs(ff_row_shifted), color='steelblue', linewidth=1)
+  axes[0].axhline(y=threshold, color='red', linestyle='--', linewidth=1, label=f'próg = {threshold}')
+  axes[0].set_title("Amplituda widma FFT")
+  axes[0].set_ylabel("|F(k)|")
+  axes[0].set_xlabel("Częstotliwość")
+  axes[0].legend()
+  axes[0].grid(True, alpha=0.3)
+
+  # Faza przed kompresją
+  axes[1].plot(freqs_shifted, phase_before, color='steelblue', linewidth=0.8, label='przed kompresją')
+  axes[1].set_title("Faza przed kompresją")
+  axes[1].set_ylabel("Faza (rad)")
+  axes[1].set_xlabel("Częstotliwość")
+  axes[1].set_ylim(-np.pi - 0.2, np.pi + 0.2)
+  axes[1].set_yticks([-np.pi, -np.pi/2, 0, np.pi/2, np.pi])
+  axes[1].set_yticklabels(['-π', '-π/2', '0', 'π/2', 'π'])
+  axes[1].grid(True, alpha=0.3)
+  axes[1].legend()
+
+  # Faza po kompresji — linia z przerwami w miejscach wyzerowanych współczynników
+  phase_kept_line = np.where(mask, phase_before, np.nan)
+  axes[2].plot(freqs_shifted, phase_before, color='steelblue', linewidth=0.8, alpha=0.25, label='przed kompresją')
+  axes[2].plot(freqs_shifted, phase_kept_line, color='tomato', linewidth=1.2, label=f'po kompresji ({kept_pct:.1f}% zachowanych)')
+  axes[2].set_title("Faza po kompresji — zachowane współczynniki (przerwy = wyzerowane)")
+  axes[2].set_ylabel("Faza (rad)")
+  axes[2].set_xlabel("Częstotliwość")
+  axes[2].set_ylim(-np.pi - 0.2, np.pi + 0.2)
+  axes[2].set_yticks([-np.pi, -np.pi/2, 0, np.pi/2, np.pi])
+  axes[2].set_yticklabels(['-π', '-π/2', '0', 'π/2', 'π'])
+  axes[2].grid(True, alpha=0.3)
+  axes[2].legend()
+
+  plt.tight_layout()
+  plt.show()
+
 def dct_compression(split_image, img_h, img_w):
   img_block = split_image[img_h, img_w]
   M, N = calculate_img_dimensions(img_block)
