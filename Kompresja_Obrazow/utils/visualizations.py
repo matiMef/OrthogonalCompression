@@ -2,48 +2,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.fftpack import dct, idct
 
-def calculate_snr(cropped_image, combined_image):
-  og = np.sum(cropped_image ** 2)
-  dif = np.sum((cropped_image - combined_image) ** 2 )
-  SNR = 10 * np.log10 (og/dif)
-  return SNR
+def show_time_chart(times):
+    labels = ['DCT', 'Scipy-DCT', 'Numpy-FFT', 'SFT']
+    values = [np.sum(t) for t in times]
 
-def calculate_noise(cropped_image, combined_image):
-  return cropped_image - combined_image
-
-def calculate_dct_coefficients(cropped_image):
-  FC = dct(dct(cropped_image, axis = 0, norm='ortho'), axis=1, norm='ortho')
-  return FC
-
-def calculate_fft_coefficients(cropped_image):
-  FF = np.fft.fft2(cropped_image)
-  return FF
-
-def caculate_aproximation_error(cropped_image):
-  FC = calculate_dct_coefficients(cropped_image)
-  FF = calculate_fft_coefficients(cropped_image)
-  sorted_dct = np.sort(np.abs(FC).flatten())[::-1]
-  sorted_fft = np.sort(np.abs(FF).flatten())[::-1]
-  total_energy_dct = np.sum(FC ** 2)
-  total_energy_dft = np.sum(np.abs(FF) ** 2)
+    plt.figure(figsize=(8, 5))
+    bars = plt.bar(labels, values, color=['tab:blue', 'tab:orange', 'tab:green', 'tab:red'])
     
-  errors_dct = []
-  errors_fft = []
-    
-  M_max = len(sorted_dct)
-  if M_max > 50000:
-    M_max = 50000
-    
-  for m in range(1, M_max):
-      energy_kept_dct = np.sum(sorted_dct[:m] ** 2)
-      energy_kept_dft = np.sum(sorted_fft[:m] ** 2)
-      errors_dct.append((total_energy_dct - energy_kept_dct) / total_energy_dct)
-      errors_fft.append((total_energy_dft - energy_kept_dft) / total_energy_dft)
-    
-  return errors_dct, errors_fft
+    plt.bar_label(bars, padding=3, fmt='%.4f')
+    plt.ylabel('Czas (s)')
+    plt.title('Czas pracy algorytmów')
+    plt.tight_layout()
+    plt.show()
 
 def show_blocks_grid(split_image):
-  plt.title("Obrazek po podziale na bloki")
+  plt.title("Obraz po podziale na bloki")
   for i in range(15):
     for j in range(15):
       plt.subplot(15, 15, i*15 + j + 1)
@@ -51,112 +24,59 @@ def show_blocks_grid(split_image):
       plt.axis('off')
   plt.show()
 
-def total_time_chart(times):
-    width = 0.2 
-    
-    type_label = ['Total time']
-    time_means = {
-        'DCT': np.sum(times[0]),
-        'Scipy-DCT': np.sum(times[1]),
-        'Numpy-FFT': np.sum(times[2]),
-        'Numpy-SFT': np.sum(times[3]) # Dodalem sft
-    }
-    
-    x = np.arange(len(type_label))  
-    fig, ax = plt.subplots(figsize=(8, 5))  
-
-    num_items = len(time_means)
-    total_group_width = num_items * width
-    start_pos = x - (total_group_width / 2) + (width / 2)
-
-    for i, (attribute, measurement) in enumerate(time_means.items()):
-        pos = start_pos + (i * width)
-        rects = ax.bar(pos, measurement, width, label=attribute)
-        ax.bar_label(rects, padding=3, fmt='%.4f') 
-
-    ax.set_ylabel('Execution time (s)')
-    ax.set_title('Total execution time comparison')
-    ax.set_xticks(x)
-    ax.set_xticklabels(type_label)
-    ax.set_xlim(x[0] - 0.5, x[0] + 0.5) 
-    ax.legend(loc='upper right')
-    plt.tight_layout()
-    plt.show()
-
-def show_decompression_efect(cropped_image, dct_image, scipy_dct_image, sft_image):
+def show_decompression_efect(cropped_image, dct_image, fft_image, sft_image):
   plt.figure(figsize=(16, 5))
   plt.subplot(1, 4, 1)
   plt.title("Przed kompresją")
   plt.imshow(cropped_image, cmap='gray')
   plt.axis('off')
+  
   plt.subplot(1, 4, 2)
   plt.title("Po kompresji DCT")
   plt.imshow(dct_image, cmap ='gray')
   plt.axis('off')
+  
   plt.subplot(1, 4, 3)
-  plt.title("Po kompresji Scipy DCT")
-  plt.imshow(scipy_dct_image, cmap='gray')
+  plt.title("Po kompresji Scipy FFT")
+  plt.imshow(fft_image, cmap='gray')
   plt.axis('off')
+  
   plt.subplot(1, 4, 4)
   plt.title("Po kompresji SFT")
   plt.imshow(sft_image, cmap='gray')
   plt.axis('off')
   plt.show()
 
-def show_SNR(cropped_image, dct_image, scipy_dct_image, fft_image, sft_image):
-  plt.figure(figsize=(12, 10)) 
+
+def calculate_snr(cropped_image, combined_image):
+  og = np.sum(cropped_image ** 2)
+  dif = np.sum((cropped_image - combined_image) ** 2 )
+  SNR = 10 * np.log10 (og/dif)
+  return SNR
+
+def show_snr(cropped_image, dct_image, scipy_dct_image, fft_image, sft_image):
   SNR_dct = calculate_snr(cropped_image, dct_image)
   SNR_scipy_dct = calculate_snr(cropped_image, scipy_dct_image)
   SNR_numpy_fft = calculate_snr(cropped_image, fft_image)
   SNR_numpy_sft = calculate_snr(cropped_image, sft_image)
   
+  plt.figure(figsize=(12, 10)) 
   plt.subplot(2, 2, 1)
   plt.title(f"DCT\nSNR = {SNR_dct:.2f} dB")
   plt.imshow(dct_image, cmap='gray')
+  
   plt.subplot(2, 2, 2)
   plt.title(f"Scipy DCT\nSNR = {SNR_scipy_dct:.2f} dB")
   plt.imshow(scipy_dct_image, cmap ='gray')
+  
   plt.subplot(2, 2, 3)
   plt.title(f"Numpy FFT\nSNR = {SNR_numpy_fft:.2f} dB")
   plt.imshow(fft_image, cmap='gray')
+ 
   plt.subplot(2, 2, 4)
-  plt.title(f"Numpy SFT\nSNR = {SNR_numpy_sft:.2f} dB")
+  plt.title(f"SFT\nSNR = {SNR_numpy_sft:.2f} dB")
   plt.imshow(sft_image, cmap='gray')
   plt.tight_layout()
-  plt.show()
-
-def show_sft_image(sft_image):
-  plt.figure(figsize=(8, 8))
-  plt.title("Zrekonstruowany obraz - SFT (Rzadka Transformata Fouriera)")
-  plt.imshow(sft_image, cmap='gray')
-  plt.axis('off')
-  plt.show()
-
-def show_correlation(cropped_image):
-  errors_dct, errors_fft = caculate_aproximation_error(cropped_image)
-  
-  plt.title("Błąd aproksymacji")
-  plt.plot(np.log10(errors_dct), color='red', label='DCT')
-  plt.plot(np.log10(errors_fft), color='blue', label='Fourier')
-  plt.xlabel("M - liczba zachowanych współczynników")
-  plt.ylabel("log10(błąd)")
-  plt.show()
-
-def show_coeffcients(cropped_image, sft_image):
-  FC = calculate_dct_coefficients(cropped_image)
-  FF = calculate_fft_coefficients(cropped_image)
-  SFT_FF = calculate_fft_coefficients(sft_image)
-  
-  plt.figure(figsize=(18, 6))
-  plt.subplot(1, 3, 1)
-  plt.title("Scipy DCT")
-  plt.imshow(np.log(1e-5 + np.abs(FC)), cmap='gray')
-  plt.subplot(1, 3, 2)
-  plt.title("Numpy FFT")
-  plt.imshow(np.log(1e-5 + np.abs(FF)), cmap='gray')
-  plt.subplot(1, 3, 3)
-  plt.title("SFT")
-  plt.imshow(np.log(1e-5 + np.abs(SFT_FF)), cmap='gray')
   plt.show()
 
 def show_phase_comparison(cropped_image, threshold):
@@ -209,3 +129,65 @@ def show_phase_comparison(cropped_image, threshold):
 
   plt.tight_layout()
   plt.show()
+
+
+def calculate_dct_coefficients(cropped_image):
+  FC = dct(dct(cropped_image, axis = 0, norm='ortho'), axis=1, norm='ortho')
+  return FC
+
+def calculate_fft_coefficients(cropped_image):
+  FF = np.fft.fft2(cropped_image)
+  return FF
+
+def caculate_aproximation_error(cropped_image):
+  FC = calculate_dct_coefficients(cropped_image)
+  FF = calculate_fft_coefficients(cropped_image)
+  sorted_dct = np.sort(np.abs(FC).flatten())[::-1]
+  sorted_fft = np.sort(np.abs(FF).flatten())[::-1]
+  total_energy_dct = np.sum(FC ** 2)
+  total_energy_dft = np.sum(np.abs(FF) ** 2)
+    
+  errors_dct = []
+  errors_fft = []
+    
+  M_max = len(sorted_dct)
+  if M_max > 50000:
+    M_max = 50000
+    
+  for m in range(1, M_max):
+      energy_kept_dct = np.sum(sorted_dct[:m] ** 2)
+      energy_kept_dft = np.sum(sorted_fft[:m] ** 2)
+      errors_dct.append((total_energy_dct - energy_kept_dct) / total_energy_dct)
+      errors_fft.append((total_energy_dft - energy_kept_dft) / total_energy_dft)
+    
+  return errors_dct, errors_fft
+
+def show_correlation(cropped_image):
+  errors_dct, errors_fft = caculate_aproximation_error(cropped_image)
+  
+  plt.title("Błąd aproksymacji")
+  plt.plot(np.log10(errors_dct), color='red', label='DCT')
+  plt.plot(np.log10(errors_fft), color='blue', label='Fourier')
+  plt.xlabel("M - liczba zachowanych współczynników")
+  plt.ylabel("log10(błąd)")
+  plt.show()
+
+def show_coeffcients(cropped_image):
+  FC = calculate_dct_coefficients(cropped_image)
+  FF = calculate_fft_coefficients(cropped_image)
+  
+  plt.figure(figsize=(18, 6))
+  plt.subplot(1, 2, 1)
+  plt.title("Scipy DCT")
+  plt.imshow(np.log(1e-5 + np.abs(FC)), cmap='gray')
+  
+  plt.subplot(1, 2, 2)
+  plt.title("Numpy FFT")
+  plt.imshow(np.log(1e-5 + np.abs(FF)), cmap='gray')
+  plt.show()
+
+
+
+
+
+

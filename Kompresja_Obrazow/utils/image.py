@@ -23,8 +23,3 @@ def split_to_bloks(cropped_image, block_size):
   split_image = np.reshape(cropped_image, (h // block_size, block_size, w // block_size, block_size))
   split_image = np.transpose(split_image, (0, 2, 1, 3))
   return split_image
-
-def calculate_image_dimensions(image):
-  img_h = np.shape(image)[0]
-  img_w = np.shape(image)[1]
-  return [img_h, img_w]

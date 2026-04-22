@@ -11,18 +11,18 @@ def end_time_measure(start):
     return time_elapsed
 
 def time_dct(split_image, dct_block_size):
-    from algorithms.dct import combine_dct_image, reshape_combined_image
+    from algorithms.dct import apply_dct_to_all_blocks, merge_blocks_into_image
     start = start_time_measure()
-    compressed_image = combine_dct_image(split_image)
-    reshape_combined_image(compressed_image, dct_block_size)
+    compressed_image = apply_dct_to_all_blocks(split_image)
+    merge_blocks_into_image(compressed_image, dct_block_size)
     time = end_time_measure(start)
     return time 
 
 def time_scipy_dct(split_image, dct_block_size):
-    from algorithms.dct import combine_scipy_dct_image, reshape_combined_image
+    from algorithms.dct import apply_scipy_dct_to_all_blocks, merge_blocks_into_image
     start = start_time_measure()
-    compressed_image = combine_scipy_dct_image(split_image)
-    reshape_combined_image(compressed_image, dct_block_size)
+    compressed_image = apply_scipy_dct_to_all_blocks(split_image)
+    merge_blocks_into_image(compressed_image, dct_block_size)
     time = end_time_measure(start)
     return time
 

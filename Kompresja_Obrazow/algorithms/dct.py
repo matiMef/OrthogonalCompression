@@ -1,8 +1,12 @@
 import numpy as np
 from scipy.fftpack import dct, idct
 
-def reshape_combined_image(image_combined, block_size):
-  from utils.image import calculate_image_dimensions
+def calculate_image_dimensions(image):
+  img_h = np.shape(image)[0]
+  img_w = np.shape(image)[1]
+  return [img_h, img_w]
+
+def merge_blocks_into_image(image_combined, block_size):
   h, w = calculate_image_dimensions(image_combined)
   temp = image_combined.transpose(0, 2, 1, 3)
   image_combined = np.reshape(temp, (h * block_size, w * block_size))
@@ -17,8 +21,7 @@ def calculate_compression_mask(M, N):
   return mask
 
 
-def combine_dct_image(split_image):
-  from utils.image import calculate_image_dimensions
+def apply_dct_to_all_blocks(split_image):
   img_h, img_w = calculate_image_dimensions(split_image)
   image_combined = np.zeros_like(split_image)
   for i in range(img_h):
@@ -28,7 +31,6 @@ def combine_dct_image(split_image):
   return image_combined 
 
 def dct_compression(split_image, img_h, img_w):
-  from utils.image import calculate_image_dimensions
   img_block = split_image[img_h, img_w]
   M, N = calculate_image_dimensions(img_block)
   PI = np.pi
@@ -53,8 +55,7 @@ def dct_compression(split_image, img_h, img_w):
   return A_compressed
 
 
-def combine_scipy_dct_image(split_image):
-  from utils.image import calculate_image_dimensions
+def apply_scipy_dct_to_all_blocks(split_image):
   img_h, img_w = calculate_image_dimensions(split_image)
   image_combined = np.zeros_like(split_image)
   for i in range(img_h):
@@ -64,7 +65,6 @@ def combine_scipy_dct_image(split_image):
   return image_combined
 
 def scipy_dct(split_image, img_h, img_w):
- from utils.image import calculate_image_dimensions
  with np.printoptions(edgeitems = 8, precision = 2, linewidth = 1000):
   B = dct(dct(split_image, axis=0, norm='ortho'), axis=1, norm='ortho')
   with np.printoptions(edgeitems=8, precision=1, linewidth=1000):

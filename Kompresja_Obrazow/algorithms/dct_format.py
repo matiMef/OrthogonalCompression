@@ -1,6 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+def calculate_image_dimensions(image):
+  img_h = np.shape(image)[0]
+  img_w = np.shape(image)[1]
+  return [img_h, img_w]
+
 def calculate_compression_mask(M, N):
   mask_size = M // 2
   mask = np.zeros((M, N))
@@ -10,7 +15,6 @@ def calculate_compression_mask(M, N):
   return mask
 
 def dct_compress_image(split_image, img_h, img_w ):
-  from utils.image import calculate_image_dimensions
   img_block = split_image[img_h, img_w]
   M, N = calculate_image_dimensions(img_block)
   PI = np.pi
