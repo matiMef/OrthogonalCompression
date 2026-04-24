@@ -4,7 +4,8 @@ from utils import time_measure, image, visualizations
 from algorithms import dct, dct_format, fft, sft
 
 dct_block_size = 64
-path = "test_models/test_model4.jpg"
+path = "test_models/test_model2.jpg"
+files_path = "test_models/"
 
 def main():
     gray_image = image.load_image(path)
@@ -33,6 +34,12 @@ def main():
     visualizations.show_time_chart(times)
 
     dct_format.save_dct_image_to_file(split_image)
+
+    benchmark_results = time_measure.time_benchmark(files_path, 1, dct_block_size)
+    visualizations.show_benchmark_chart(benchmark_results)
+
+    dct_benchmark_results = time_measure.dct_time_benchmark(files_path)
+    visualizations.show_dct_benchmark_chart(dct_benchmark_results)
     
 if __name__ == "__main__":
   sys.exit(main())

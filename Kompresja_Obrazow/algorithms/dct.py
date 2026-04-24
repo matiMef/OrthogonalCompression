@@ -45,9 +45,9 @@ def dct_compression(split_image, img_h, img_w):
   T[1:, :] /= np.sqrt(M / 2)
   B = (T @ img_block @ T.T)
 
-  with np.printoptions(edgeitems=8, precision=1, linewidth=1000):
-    if(img_h == 0 and img_w == 0):
-      print(B)
+  # with np.printoptions(edgeitems=8, precision=1, linewidth=1000):
+  #   if(img_h == 0 and img_w == 0):
+  #     print(B)
   
   mask = calculate_compression_mask(M,N)
   B_masked = B * mask
@@ -65,11 +65,10 @@ def apply_scipy_dct_to_all_blocks(split_image):
   return reconstructed_image
 
 def scipy_dct(split_image, img_h, img_w):
- with np.printoptions(edgeitems=8, precision=2, linewidth = 1000):
   B = dct(dct(split_image, axis=0, norm='ortho'), axis=1, norm='ortho')
-  with np.printoptions(edgeitems=8, precision=1, linewidth=1000):
-    if(img_h == 0 and img_w == 0):
-      print(B)
+  # with np.printoptions(edgeitems=8, precision=1, linewidth=1000):
+  #   if(img_h == 0 and img_w == 0):
+  #     print(B)
   M, N = calculate_image_dimensions(split_image)
   mask = calculate_compression_mask(M, N)
   B_compressed = B * mask

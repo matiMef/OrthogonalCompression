@@ -186,8 +186,60 @@ def show_coeffcients(cropped_image):
   plt.imshow(np.log(1e-5 + np.abs(FF)), cmap='gray')
   plt.show()
 
+def show_benchmark_chart(benchmark_results):
+  if not benchmark_results:
+      print("Brak danych do wyświetlenia.")
+      return
 
+  labels = ['DCT', 'Scipy-DCT', 'Numpy-FFT', 'SFT']
+    
+  total_times = {
+      "dct": 0,
+      "scipy_dct": 0,
+      "fft": 0,
+      "sft": 0
+  }
 
+  for file_results in benchmark_results.values():
+      total_times["dct"] += file_results["dct"]
+      total_times["scipy_dct"] += file_results["scipy_dct"]
+      total_times["fft"] += file_results["fft"]
+      total_times["sft"] += file_results["sft"]
 
+  values = [total_times["dct"], total_times["scipy_dct"], total_times["fft"], total_times["sft"]]
 
+  plt.figure(figsize=(10, 6))
+  colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red']
+  bars = plt.bar(labels, values, color=colors)
+  plt.bar_label(bars, padding=3, fmt='%.4f')
+  plt.ylabel('Łączny czas średni (s)')
+  plt.title(f'Porównanie wydajności algorytmów (łącznie dla {len(benchmark_results)} plików)')
+  plt.grid(axis='y', linestyle='--', alpha=0.7)
+  plt.tight_layout()
+  plt.show()
 
+def show_dct_benchmark_chart(benchmark_results):
+    if not benchmark_results:
+        print("Brak danych do wyświetlenia.")
+        return
+
+    first_file = next(iter(benchmark_results))
+    labels = list(benchmark_results[first_file].keys())
+    total_times = {label: 0 for label in labels}
+
+    for file_results in benchmark_results.values():
+        for label in labels:
+            total_times[label] += file_results.get(label, 0)
+
+    values = [total_times[label] for label in labels]
+
+    plt.figure(figsize=(10, 6))
+    colors = plt.cm.viridis(np.linspace(0, 0.8, len(labels)))
+    bars = plt.bar(labels, values, color=colors, edgecolor='black', alpha=0.8)
+    plt.bar_label(bars, padding=3, fmt='%.4f')
+    plt.ylabel('Łączny czas wykonania (s)')
+    plt.xlabel('Rozmiar bloku DCT')
+    plt.title(f'Wpływ rozmiaru bloku na czas procesowania (Suma z {len(benchmark_results)} plików)')
+    plt.grid(axis='y', linestyle='--', alpha=0.5)
+    plt.tight_layout()
+    plt.show()

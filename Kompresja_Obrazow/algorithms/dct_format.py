@@ -41,7 +41,7 @@ def transform_B_into_row(B_masked):
 def compress_B(split_image):
     quality_scale = 10
     img_h, img_w, M, N = np.shape(split_image)
-    print(img_h, img_w, M)
+    # print(img_h, img_w, M)
     all_data = [] 
     
     all_data.extend([img_h])
@@ -57,7 +57,7 @@ def compress_B(split_image):
     final_data = np.array(all_data, dtype=np.float16)
     final_data = quality_scale * final_data
     final_data = np.array([int(i) for i in final_data])
-    print(final_data)
+    # print(final_data)
     np.savez_compressed('compressions/kompresja.celpeg.npz', data=final_data)
 
 def decompress_B(filename):
@@ -65,7 +65,7 @@ def decompress_B(filename):
     archive = np.load(filename)
     final_data = archive['data']
     final_data = final_data.astype(np.float32) / quality_scale
-    print(final_data[0], final_data[1], final_data[2])
+    # print(final_data[0], final_data[1], final_data[2])
     img_h, img_w, M = int(final_data[0]), int(final_data[1]), int(final_data[2])
     final_data = np.delete(final_data, 0, 0)
     final_data = np.delete(final_data, 0, 0)
