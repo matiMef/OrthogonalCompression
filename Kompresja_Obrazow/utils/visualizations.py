@@ -38,7 +38,7 @@ def show_decompression_efect(cropped_image, dct_image, fft_image, sft_image):
   plt.axis('off')
   
   plt.subplot(1, 4, 3)
-  plt.title("Po kompresji Scipy FFT")
+  plt.title("Po kompresji Numpy FFT")
   plt.imshow(fft_image, cmap='gray')
   plt.axis('off')
   

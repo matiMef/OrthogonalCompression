@@ -1,2 +1,13 @@
 .vscode/settings.json
 /Kompresja_Obrazow/algorithms/__pycache__
+*.pyc
+*.pyc
+Kompresja_Obrazow/utils/__pycache__/image.cpython-313.pyc
+Kompresja_Obrazow/utils/__pycache__/time_measure.cpython-313.pyc
+Kompresja_Obrazow/utils/__pycache__/visualizations.cpython-313.pyc
+Kompresja_Obrazow/algorithms/__pycache__/sft.cpython-313.pyc
+Kompresja_Obrazow/algorithms/__pycache__/fft.cpython-313.pyc
+Kompresja_Obrazow/algorithms/__pycache__/dct_format.cpython-313.pyc
+Kompresja_Obrazow/algorithms/__pycache__/dct.cpython-313.pyc
+Kompresja_Obrazow/algorithms/__pycache__/__init__.cpython-313.pyc
+*.pyc
