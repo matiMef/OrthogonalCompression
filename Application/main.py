@@ -1,6 +1,6 @@
 import sys
 import numpy as np
-from utils import time_measure, image, visualizations
+from utils import time_measure, image, visualizations, sft_visualisation
 from algorithms import dct, dct_format, fft, sft
 
 dct_block_size = 64
@@ -26,6 +26,8 @@ def main():
     visualizations.show_phase_comparison(cropped_image, 50)
     visualizations.show_correlation(cropped_image)
     visualizations.show_coeffcients(cropped_image)
+
+    sft_visualisation.show_sft_steps(cropped_image, keep_fraction=0.01)
 
     times = np.zeros((4,1))
     times[0] = time_measure.time_dct(split_image, dct_block_size)
